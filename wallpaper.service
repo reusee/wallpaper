@@ -1,0 +1,9 @@
+[Unit]
+Description=set desktop wallpaper
+
+[Service]
+Type=oneshot
+ExecStart=/home/reus/bin/wallpaper
+
+[Install]
+WantedBy=multi-user.target
