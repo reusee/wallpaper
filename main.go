@@ -56,37 +56,41 @@ do:
 	// get file
 	imageDir := "/media/nil/wallpapers"
 	filePath := filepath.Join(imageDir, data.Images[0].Hsh)
-	if _, err := os.Stat(filePath); err == nil {
-		// file exists
-		out, err := exec.Command("/usr/bin/feh", "--bg-fill", filePath).CombinedOutput()
-		pt("%s\n", out)
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// file not exists, download
+		resp, err = http.Get("https://bing.com" + data.Images[0].URL)
+		if err != nil {
+			if retry > 0 {
+				retry--
+				goto do
+			}
+			ce(err)
+		}
+		defer resp.Body.Close()
+		f, err := os.Create(filePath + ".tmp")
 		ce(err)
-		return
-	}
+		if _, err := io.Copy(f, resp.Body); err != nil {
+			if retry > 0 {
+				retry--
+				goto do
+			}
+			ce(err)
+		}
+		f.Close()
+		ce(os.Rename(filePath+".tmp", filePath))
 
-	// download
-	resp, err = http.Get("https://bing.com" + data.Images[0].URL)
-	if err != nil {
-		if retry > 0 {
-			retry--
-			goto do
-		}
+	} else if err != nil {
 		ce(err)
 	}
-	defer resp.Body.Close()
-	f, err := os.Create(filePath + ".tmp")
-	ce(err)
-	if _, err := io.Copy(f, resp.Body); err != nil {
-		if retry > 0 {
-			retry--
-			goto do
-		}
-		ce(err)
-	}
-	f.Close()
-	ce(os.Rename(filePath+".tmp", filePath))
 
 	out, err := exec.Command("/usr/bin/feh", "--bg-fill", filePath).CombinedOutput()
+	pt("%s\n", out)
+	ce(err)
+
+	out, err = exec.Command(
+		"gsettings", "set", "org.gnome.desktop.background", "picture-uri",
+		"file://"+filePath,
+	).CombinedOutput()
 	pt("%s\n", out)
 	ce(err)
 }
