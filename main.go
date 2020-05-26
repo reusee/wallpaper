@@ -54,7 +54,12 @@ do:
 	}
 
 	// get file
-	imageDir := "/media/nil/wallpapers"
+	configDir, err := os.UserConfigDir()
+	ce(err)
+	imageDir := filepath.Join(configDir, "wallpapers")
+	if _, err := os.Stat(imageDir); os.IsNotExist(err) {
+		ce(os.Mkdir(imageDir, 0755))
+	}
 	filePath := filepath.Join(imageDir, data.Images[0].Hsh)
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		// file not exists, download
