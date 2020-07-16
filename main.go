@@ -88,14 +88,26 @@ do:
 		ce(err)
 	}
 
-	out, err := exec.Command("/usr/bin/feh", "--bg-fill", filePath).CombinedOutput()
-	pt("%s\n", out)
-	ce(err)
+	fehPath, err := exec.LookPath("feh")
+	if err == nil {
+		out, err := exec.Command(fehPath, "--bg-fill", filePath).CombinedOutput()
+		pt("%s\n", out)
+		_ = err
+	}
 
-	out, err = exec.Command(
+	out, err := exec.Command(
 		"gsettings", "set", "org.gnome.desktop.background", "picture-uri",
 		"file://"+filePath,
 	).CombinedOutput()
 	pt("%s\n", out)
-	ce(err)
+	_ = err
+
+	out, err = exec.Command(
+		"osascript",
+		"-e",
+		`tell application "Finder" to set desktop picture to POSIX file "`+filePath+`"`,
+	).CombinedOutput()
+	pt("%s\n", out)
+	_ = err
+
 }
